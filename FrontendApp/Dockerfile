@@ -19,6 +19,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=build /app/dist/FrontendApp/browser/ /usr/share/nginx/html/
 
+USER nginx
+
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \

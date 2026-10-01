@@ -85,3 +85,82 @@ jobs:
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           category: "/language:${{ matrix.language }}"
+
+  trivy:
+    name: Trivy vulnerability scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      TRIVY_VERSION: "0.75.0"
+      TRIVY_LINUX_X64_SHA256: "c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Install verified Trivy CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          archive="/tmp/trivy.tar.gz"
+          download_url="https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+
+          curl --fail --location --silent --show-error \
+            --output "${archive}" \
+            "${download_url}"
+
+          echo "${TRIVY_LINUX_X64_SHA256}  ${archive}" \
+            | sha256sum --check
+
+          tar --extract --gzip --file "${archive}" --directory /tmp trivy
+          /tmp/trivy --version
+
+      - name: Scan dependencies and configuration
+        run: >-
+          /tmp/trivy fs
+          --scanners vuln,misconfig
+          --severity HIGH,CRITICAL
+          --ignore-unfixed
+          --exit-code 1
+          --no-progress
+          --skip-dirs '**/.terraform'
+          --skip-dirs '**/.venv'
+          --skip-dirs '**/node_modules'
+          .
+
+      - name: Build Asset Management image
+        run: >-
+          docker build
+          --file AssetManagementService/Dockerfile
+          --tag asset-management:security-scan
+          AssetManagementService
+
+      - name: Scan Asset Management image
+        run: >-
+          /tmp/trivy image
+          --scanners vuln
+          --severity HIGH,CRITICAL
+          --ignore-unfixed
+          --exit-code 1
+          --no-progress
+          asset-management:security-scan
+
+      - name: Build frontend image
+        run: >-
+          docker build
+          --file FrontendApp/Dockerfile
+          --tag translation-frontend:security-scan
+          FrontendApp
+
+      - name: Scan frontend image
+        run: >-
+          /tmp/trivy image
+          --scanners vuln
+          --severity HIGH,CRITICAL
+          --ignore-unfixed
+          --exit-code 1
+          --no-progress
+          translation-frontend:security-scan
