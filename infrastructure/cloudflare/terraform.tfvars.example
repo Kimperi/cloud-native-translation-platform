@@ -1,0 +1,5 @@
+cloudflare_account_id = "replace-with-your-cloudflare-account-id"
+
+# These defaults match the resources used by the GitHub Actions workflows.
+pages_project_name = "translation-platform-frontend"
+r2_bucket_name     = "translation-platform-i18n"
