@@ -1,0 +1,66 @@
+name: Uptime Monitor
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime-monitor
+  cancel-in-progress: true
+
+env:
+  FRONTEND_URL: ${{ vars.FRONTEND_URL || 'https://translation-platform-frontend.pages.dev' }}
+  ASSET_API_URL: ${{ vars.ASSET_API_URL || 'https://aitranslationsplatformpoc.onrender.com' }}
+
+jobs:
+  smoke-test:
+    name: Check deployed services
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check frontend routes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for route in "/" "/fr/" "/de/"; do
+            echo "Checking ${FRONTEND_URL}${route}"
+            curl \
+              --fail \
+              --location \
+              --silent \
+              --show-error \
+              --retry 3 \
+              --retry-all-errors \
+              --max-time 20 \
+              --output /dev/null \
+              "${FRONTEND_URL}${route}"
+          done
+
+      - name: Check Asset Management API
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          response="$(
+            curl \
+              --fail \
+              --silent \
+              --show-error \
+              --retry 3 \
+              --retry-all-errors \
+              --max-time 30 \
+              "${ASSET_API_URL}/health"
+          )"
+
+          python3 -c \
+            'import json, sys; assert json.loads(sys.argv[1]) == {"status": "ok"}' \
+            "${response}"
+
+          echo "Asset Management API is healthy."
