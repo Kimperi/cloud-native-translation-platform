@@ -13,6 +13,7 @@ dependencies = [
   "uvicorn[standard]>=0.30,<1.0",
   "httpx>=0.27,<1.0",
   "python-dotenv>=1.0,<2.0",
+  "boto3>=1.35,<2.0",
 ]
 
 [project.optional-dependencies]
@@ -31,11 +32,3 @@ target-version = "py313"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
-
-dependencies = [
-    "fastapi>=0.115,<1.0",
-    "uvicorn[standard]>=0.30,<1.0",
-    "httpx>=0.27,<1.0",
-    "python-dotenv>=1.0,<2.0",
-    "boto3>=1.35,<2.0",
-]

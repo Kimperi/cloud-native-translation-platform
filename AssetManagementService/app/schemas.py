@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AssetCreate(BaseModel):
@@ -6,7 +6,7 @@ class AssetCreate(BaseModel):
     reference: str
     status: str
     owner: str | None = None
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list)
 
 
 class TagResponse(BaseModel):

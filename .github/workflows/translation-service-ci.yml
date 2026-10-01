@@ -4,6 +4,7 @@ name: Translation Service CI
   pull_request:
     branches:
       - develop
+      - develop-stage
       - main
     paths:
       - "TranslationService/**"
@@ -12,6 +13,7 @@ name: Translation Service CI
   push:
     branches:
       - develop
+      - develop-stage
       - main
       - "feature/**"
     paths:
@@ -56,7 +58,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install fastapi uvicorn httpx python-dotenv boto3 pytest
+          python -m pip install -e ".[dev]"
 
       - name: Run tests
         run: python -m pytest -q

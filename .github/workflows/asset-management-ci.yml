@@ -4,6 +4,7 @@ name: Asset Management CI
   pull_request:
     branches:
       - develop
+      - develop-stage
       - main
     paths:
       - "AssetManagementService/**"
@@ -12,6 +13,7 @@ name: Asset Management CI
   push:
     branches:
       - develop
+      - develop-stage
       - main
       - "feature/**"
     paths:
@@ -50,8 +52,8 @@ jobs:
           --health-retries=5
 
     env:
-       DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-       TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+      DATABASE_URL: postgresql+psycopg://asset_user:asset_password@localhost:5432/asset_management
+      TEST_DATABASE_URL: postgresql+psycopg://asset_user:asset_password@localhost:5432/asset_management
 
     defaults:
       run:
