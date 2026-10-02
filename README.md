@@ -35,6 +35,7 @@ flowchart LR
     FrontendCI --> Pages
     Terraform[Terraform] -. defines and adopts .-> Pages
     Terraform -. defines and adopts .-> R2
+    Terraform --> State[(Private R2<br/>remote state)]
 ```
 
 Translation artifacts are published to versioned R2 paths. CI selects an
@@ -61,7 +62,7 @@ translations when they start.
 | Translation Publish | Manually publishes a selected immutable translation version |
 | Frontend CI | Tests, audits, localizes, builds, and container-checks the frontend |
 | Frontend CD | Deploys the validated frontend artifact to Cloudflare Pages |
-| Security CI | Runs Gitleaks and CodeQL for Python and JavaScript/TypeScript |
+| Security CI | Runs Gitleaks, CodeQL, Trivy dependency/configuration scans, and container-image scans |
 | Terraform CI | Checks formatting and validates Cloudflare infrastructure code |
 | Uptime Monitor | Checks the deployed frontend routes and backend health every six hours |
 
@@ -125,6 +126,9 @@ They also expect these GitHub Actions secrets:
 Use read-only R2 credentials in consumer workflows and separate write-enabled
 credentials only for translation publication.
 
+Terraform backend credentials are intentionally not GitHub Actions secrets.
+They are local S3-compatible keys scoped only to the private state bucket.
+
 ## Terraform adoption
 
 Terraform definitions are in `infrastructure/cloudflare`. The Pages project and
@@ -134,10 +138,24 @@ for the safe commands.
 
 Terraform is deliberately not applied automatically. Pull requests validate
 the configuration, while infrastructure changes remain a reviewed manual step.
+The encrypted-at-rest state is held in a dedicated private R2 bucket instead of
+being committed or shared as a local file.
+
+## Security checks
+
+- **Gitleaks** scans the complete Git history for committed credentials.
+- **CodeQL** analyzes security-sensitive data flow in Python and TypeScript.
+- **Trivy** blocks high or critical known vulnerabilities in dependencies and
+  runtime images, and checks Dockerfiles and Terraform for misconfiguration.
+- Containers run as non-root users.
+
+Each tool has a separate responsibility so secret, source-code, dependency,
+container, and infrastructure risks are all represented without duplicate
+scanning.
 
 ## Current scope
 
 This is a portfolio POC, not a production platform. Public API authentication,
 managed database hosting, centralized logs, alert routing, remote Terraform
-state, and multi-environment promotion are sensible future improvements. The
-current implementation focuses on a clear, working, zero-cost architecture.
+state locking, and multi-environment promotion are sensible future improvements.
+The current implementation focuses on a clear, working, zero-cost architecture.
