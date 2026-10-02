@@ -15,6 +15,10 @@ RUN npm run build -- --localize
 
 FROM nginxinc/nginx-unprivileged:alpine AS runtime
 
+USER root
+
+RUN apk upgrade --no-cache
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=build /app/dist/FrontendApp/browser/ /usr/share/nginx/html/
